@@ -1,34 +1,23 @@
+import AltContainer from 'alt-container';
 import React from 'react';
 import uuid from 'uuid';
 import Notes from './Notes';
+import NoteActions from '../actions/NoteActions';
+import NoteStore from '../stores/NoteStore';
 
 export default class App extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      notes: [
-        {
-          id: uuid.v4(),
-          task: 'Learn webpack'
-        },
-        {
-          id: uuid.v4(),
-          task: 'Learn React'
-        },
-        {
-          id: uuid.v4(),
-          task: 'Do laundry'
-        }
-      ]
-    }
-  }
 
   render() {
     const notes = this.state.notes;
     return (
       <div>
         <button className="add-note" onClick={this.addNote}>+</button>
-        <Notes notes={notes} onEdit={this.editNote} onDelete={this.deleteNote}/>
+        <AltContainer stores={[NoteStore]}
+          inject={{
+            notes: () => NoteStore.getState().notes
+          }}>
+          <Notes onEdit={this.editNote} onDelete={this.deleteNote}/>
+        </AltContainer>
       </div>
     );
   }
@@ -50,11 +39,7 @@ export default class App extends React.Component {
     // more than make up for it.
     //
     // Libraries, such as Immutable.js, go a notch further.
-    this.setState({
-      notes: this.state.notes.concat([{
-        id: uuid.v4(),
-        task: 'New task'
-      }]) });
+    NoteActions.create({ task: 'New task'});
   };
 
   editNote = (id, task) => {
@@ -63,21 +48,11 @@ export default class App extends React.Component {
       return;
     }
 
-    const notes = this.state.notes.map(note => {
-      if(note.id === id) {
-        note.task = task;
-      }
-      return note;
-    });
-    this.setState({
-      notes: notes
-    });
+    NoteActions.update({id, task});
   }
 
   deleteNote = (id, e) => {
     e.stopPropagation();
-    this.setState({
-      notes: this.state.notes.filter(note => note.id !== id)
-    });
+    NoteActions.delete(id);
   }
 }
